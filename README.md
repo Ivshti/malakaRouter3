@@ -221,6 +221,44 @@ board. Not every step is needed every time — use judgment per board.
   needed) are committed first so their stubs become obstacles the back row's
   search correctly respects.
 
+## Layer direction discipline
+
+Manual routers commonly bias each copper layer toward a consistent direction —
+often diagonal, with adjacent layers running opposite diagonals — rather than
+letting each net find whatever angle is locally shortest. The reason isn't
+cosmetic: it keeps any two adjacent layers from running long parallel stretches
+in the same direction (which is what couples them), and it makes via
+transitions and DRC review predictable to eyeball, since a trace's layer is
+recognizable from its angle alone.
+
+KiCadRoutingTools' `route.py` already does an orthogonal version of this by
+default, whether or not you ask for it: `direction_preference_cost` defaults to
+`50` (nonzero = enabled), and `get_layer_direction_preferences()` assigns each
+layer an alternating horizontal/vertical preference by layer index (F.Cu
+horizontal, In1.Cu vertical, In2.Cu horizontal, B.Cu vertical, ...), penalizing
+routes that go against their layer's preferred axis. Every `route.py` call in
+the workflow above benefits from this without any extra flags — it's why
+routed boards already show a visible per-layer directional tendency.
+
+That cost is deliberately small relative to the router's other costs —
+`TURN_COST` and `CROSSING_PENALTY` are both `1000`, twenty times
+`DIRECTION_PREFERENCE_COST`'s `50` (the same order as `VIA_COST`). So it acts
+as a **tiebreaker between otherwise-equal paths**, not a dominant steering
+force: a genuinely shorter or lower-via route still wins even against its
+layer's grain. This mirrors the same design choice other PCB tooling (e.g.
+atopile) makes for the identical reason — a hard directional bias would fight
+the router's actual job (shortest legal path) on every board where the
+"wrong-grain" route is meaningfully better; a tiebreaker only kicks in when the
+router would otherwise be indifferent.
+
+What isn't modeled yet is true diagonal preference (opposite 45°/135° per
+layer, rather than orthogonal H/V). The router's pathfinding is octolinear (45°
+jogs are already part of how it connects two points), but the preference-cost
+mechanism only recognizes horizontal, vertical, or no preference — not a
+specific diagonal orientation. Formalizing that as the same kind of low-weight
+tiebreaker (alternating +45°/-45° instead of H/V) is a reasonable next step,
+given how directly it matches established manual-routing practice.
+
 ## Limitations
 
 - **Directional connectors only for `--ref`.** The escape-direction heuristic
