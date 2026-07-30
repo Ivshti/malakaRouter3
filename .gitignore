@@ -1,3 +1,12 @@
 __pycache__/
 *.pyc
 .DS_Store
+
+# Local-only: reverse map for PLAN.md's sanitized identifiers, and the script
+# that produced it. PLAN.md is public; these are not.
+SANITIZATION-MAP.md
+sanitize_plan.local.py
+sanitize_applied.local.json
+
+# Real board artifacts — never publish
+best/
