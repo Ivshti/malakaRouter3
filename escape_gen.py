@@ -55,7 +55,7 @@ class EscapePin:
     x: float
     y: float
     is_front: bool           # front row escapes on top layer without a via
-    pair_key: Optional[str]  # diff-pair stem, e.g. ".../DPHY1_D0"
+    pair_key: Optional[str]  # diff-pair stem, e.g. ".../PAIR0_D0"
     polarity: Optional[str]  # 'P' / 'N' / None
 
 
@@ -102,8 +102,8 @@ def collect_board_segments(pcb, center, radius) -> List[tuple]:
     """Existing track segments near `center`, in the (a,b,width,net,layer) shape
     `seg_clear` expects for `placed_segs` — so new copper is checked against
     copper THIS RUN didn't place, not just pads/vias. Missing this was a real
-    bug: a power-tap stub drove straight through an already-routed CAN/STBY
-    track because collect_obstacles only modeled pads and vias."""
+    bug: a power-tap stub drove straight through an already-routed neighbouring
+    signal track because collect_obstacles only modeled pads and vias."""
     cx, cy = center
     out = []
     for s in pcb.segments:
@@ -506,7 +506,7 @@ def main():
     ap = argparse.ArgumentParser(description="Fine-pitch escape generator (v0)")
     ap.add_argument("input")
     ap.add_argument("output")
-    ap.add_argument("--ref", help="connector footprint ref, e.g. J1701")
+    ap.add_argument("--ref", help="connector footprint ref, e.g. J1")
     ap.add_argument("--power-taps", default=None,
                     help="comma list of REF.PAD power pads to tap to plane with "
                          "standard vias (mode: single-pad plane taps, not a connector escape)")
